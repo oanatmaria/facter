@@ -37,7 +37,9 @@ module Facter
       fact = get_fact(fact_name)
       return fact[:group] if fact
 
-      @groups.detect { |k, v| break k if Array(v).find { |f| fact_name =~ /^#{f}.*/ } }
+      @groups.detect do |k, v|
+        break k if Array(v).find { |f| fact_name.include?(".*") ? fact_name == f : fact_name =~ /^#{f}.*/ }
+      end
     end
 
     # Get config ttls for a given group
@@ -50,7 +52,13 @@ module Facter
     def get_fact(fact_name)
       return @facts_ttls[fact_name] if @facts_ttls[fact_name]
 
-      result = @facts_ttls.select { |name, fact| break fact if fact_name =~ /^#{name}\..*/ }
+      result = @facts_ttls.select do |name, fact|
+        if fact_name.include?("_")
+          break fact if fact_name =~ /^#{name}.*/
+        else
+          break fact if fact_name =~ /^#{name}\..*/
+        end
+      end
       return nil if result == {}
 
       result
